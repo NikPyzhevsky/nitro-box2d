@@ -45,11 +45,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mrousavy/nitro.git"
+    "url": "git+https://github.com/NikPyzhevsky/nitro-box2d.git"
   },
   "license": "MIT",
   "author": "nitro-box2d",
-  "homepage": "https://nitro.margelo.com/docs/getting-started/how-to-build-a-nitro-module",
+  "homepage": "https://github.com/NikPyzhevsky/nitro-box2d#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
