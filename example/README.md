@@ -1,7 +1,7 @@
 # nitro-box2d example
 
-An Expo app that is two things at once: a physics playground you can poke at,
-and the test suite for `nitro-box2d`, run on a real device or simulator through
+An Expo app that is two things at once: two screens you can play with, and the
+test suite for `nitro-box2d`, run on a real device or simulator through
 [React Native Harness](https://react-native-harness.dev).
 
 ## Running the app
@@ -12,13 +12,42 @@ npx expo prebuild
 npm run ios      # or: npm run android
 ```
 
+### Playground
+
 Tap anywhere to drop a shape, *Explode* to blow the pile apart, *Reset* to clear
 it. The header shows the Box2D version, the body count and how long a solver step
 is actually taking.
 
-The interesting code is [`src/world.ts`](src/world.ts): the fixed-timestep
-accumulator, the metres-to-pixels conversion, and the choice to render only the
-bodies that moved.
+[`src/playground/scene.ts`](src/playground/scene.ts) is the short version of
+using this library: the fixed-timestep accumulator, the metres-to-pixels
+conversion, and the choice to render only the bodies that moved.
+
+### Pinball
+
+Drag anywhere on the table to draw the plunger back, let go to launch. Pull
+about seven tenths of the way and the ball clears the lane into the play area;
+less than that and it drops back onto the plunger for another go, at no cost.
+The whole bottom of the table is scoring pockets, ×20 in the middle behind two
+tall guards.
+
+It leans on the parts of the library the playground never touches:
+
+- **A prismatic joint is the entire plunger.** The joint confines the body to
+  the lane's axis, its limit is the travel, and its spring is what fires it.
+  Drawing back is a motor fighting that spring; releasing just switches the
+  motor off. [`src/pinball/scene.ts`](src/pinball/scene.ts)
+- **Sensors score.** Each pocket is a sensor shape, and a `beginSensors` event
+  maps back to its pocket through the shape id. Sensor events are opt-in on the
+  *visitor* as well as on the sensor — forgetting that on the ball is why the
+  first version of this screen scored nothing.
+- **Contact events ring up the pegs**, and only the pegs: events are per shape,
+  so the walls stay silent and cost nothing.
+- **The table is data.** [`src/pinball/table.ts`](src/pinball/table.ts) returns
+  the geometry, and both the physics bodies and the on-screen lines are built
+  from it, so a wall can never be drawn somewhere the ball does not collide.
+
+Both screens stay mounted when you switch tabs, so a game in progress survives.
+Only the visible one steps its world; an unstepped world costs nothing.
 
 ## Running the tests
 
@@ -63,14 +92,23 @@ serially on one runner at a time.
 | `events.harness.ts` | contact / hit / sensor events, ray casts, point and AABB queries, explosions |
 | `joints.harness.ts` | distance, revolute, prismatic, weld and mouse joints, including limits and motors |
 | `ui.harness.tsx` | a React component driving a world, queried and pressed through `@react-native-harness/ui` |
+| `pinball.harness.ts` | the pinball table itself: pockets tile the bottom, the plunger draws and springs back, a full draw clears the lane and a light one does not, and a ball ends up scoring |
 
-Two things the suite deliberately checks beyond "does it run":
+The pinball suite is not decoration. Every number in that screen — spring
+stiffness, gravity, where the lane wall stops — was picked by running those
+tests and reading what the ball actually did, and they are what stops a later
+tweak from quietly making the table unplayable.
+
+Three things the suite deliberately checks beyond "does it run":
 
 - **Determinism** — the same scene stepped twice produces bit-identical results.
   A physics binding that quietly loses precision somewhere between JS and C++
   fails this and passes everything else.
 - **Lifetime** — a destroyed body, shape, joint or world throws on access. That
   is the difference between a clear error and a use-after-free.
+- **Playability** — a full plunger draw gets the ball out of the lane, a light
+  one does not. A physics binding can be perfectly correct and still produce a
+  table nobody can play.
 
 ### Writing more
 

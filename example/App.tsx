@@ -1,121 +1,36 @@
 import { StatusBar } from 'expo-status-bar'
-import { box2d, radToDeg } from 'nitro-box2d'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  type GestureResponderEvent,
-} from 'react-native'
+import { box2d } from 'nitro-box2d'
+import { useCallback, useMemo, useState } from 'react'
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Scene, WORLD_WIDTH_METERS, type Transform } from './src/world'
+import { PinballScreen } from './src/pinball/PinballScreen'
+import { PlaygroundScreen } from './src/playground/PlaygroundScreen'
 
-type Placed = {
-  bodyId: number
-  kind: 'box' | 'circle'
-  halfWidth: number
-  halfHeight: number
-  color: string
-  transform: Transform
-}
+const TABS = [
+  { key: 'playground', label: 'Playground' },
+  { key: 'pinball', label: 'Pinball' },
+] as const
 
-function Playground() {
+type TabKey = (typeof TABS)[number]['key']
+
+function Shell() {
   const insets = useSafeAreaInsets()
   const { width, height } = useWindowDimensions()
 
-  const stageWidth = width
-  const stageHeight = height - insets.top - insets.bottom - 148
+  const [tab, setTab] = useState<TabKey>('playground')
+  const [stats, setStats] = useState<Record<TabKey, string>>({ playground: '', pinball: '' })
 
-  // Pixels per metre. Fixed by the width, so the world is always six metres across.
-  const scale = stageWidth / WORLD_WIDTH_METERS
-  const heightMeters = stageHeight / scale
+  const stageHeight = height - insets.top - insets.bottom - 196
 
-  const sceneRef = useRef<Scene | null>(null)
-  const [placed, setPlaced] = useState<Placed[]>([])
-  const [stepMs, setStepMs] = useState(0)
-
-  useEffect(() => {
-    const scene = new Scene(heightMeters)
-    sceneRef.current = scene
-
-    let frame = 0
-    let previous = 0
-
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick)
-      if (previous === 0) {
-        previous = now
-        return
-      }
-
-      const elapsed = (now - previous) / 1000
-      previous = now
-
-      if (scene.advance(elapsed) === 0) {
-        return
-      }
-
-      const transforms = scene.readTransforms()
-      if (transforms.size === 0) {
-        // Everything is asleep. Re-rendering identical positions is pure waste.
-        return
-      }
-
-      setPlaced((current) =>
-        current.map((item) => {
-          const next = transforms.get(item.bodyId)
-          return next === undefined ? item : { ...item, transform: next }
-        })
-      )
-      setStepMs(scene.world.getProfile().step)
-    }
-
-    frame = requestAnimationFrame(tick)
-
-    return () => {
-      cancelAnimationFrame(frame)
-      scene.destroy()
-      sceneRef.current = null
-    }
-  }, [heightMeters])
-
-  const drop = useCallback(
-    (event: GestureResponderEvent) => {
-      const scene = sceneRef.current
-      if (scene === null) {
-        return
-      }
-
-      const { locationX, locationY } = event.nativeEvent
-      const position = {
-        x: locationX / scale - WORLD_WIDTH_METERS / 2,
-        y: (stageHeight - locationY) / scale,
-      }
-
-      const kind = Math.random() < 0.5 ? 'box' : 'circle'
-      const body = scene.drop(position, kind)
-      const sprite = scene.sprites.get(body.id)!
-
-      setPlaced((current) => [
-        ...current,
-        { ...sprite, transform: { x: position.x, y: position.y, angle: 0 } },
-      ])
-    },
-    [scale, stageHeight]
+  const onPlaygroundStats = useCallback(
+    (value: string) => setStats((current) => ({ ...current, playground: value })),
+    []
   )
-
-  const explode = useCallback(() => {
-    // Just above the floor, where whatever has been dropped ends up.
-    sceneRef.current?.explode({ x: 0, y: 0.4 })
-  }, [])
-
-  const reset = useCallback(() => {
-    sceneRef.current?.clearDroppedBodies()
-    setPlaced([])
-  }, [])
+  const onPinballStats = useCallback(
+    (value: string) => setStats((current) => ({ ...current, pinball: value })),
+    []
+  )
 
   const version = useMemo(() => box2d.version, [])
 
@@ -124,46 +39,46 @@ function Playground() {
       <View style={styles.header}>
         <Text style={styles.title}>nitro-box2d</Text>
         <Text style={styles.subtitle}>
-          Box2D {version} · {placed.length} bodies · {stepMs.toFixed(2)} ms/step
+          Box2D {version}
+          {stats[tab] === '' ? '' : ` · ${stats[tab]}`}
         </Text>
       </View>
 
-      <Pressable style={[styles.stage, { height: stageHeight }]} onPress={drop}>
-        {placed.map((item) => {
-          const size = { width: item.halfWidth * 2 * scale, height: item.halfHeight * 2 * scale }
-          const left = (item.transform.x + WORLD_WIDTH_METERS / 2) * scale - size.width / 2
-          const top = stageHeight - item.transform.y * scale - size.height / 2
+      <View style={styles.tabs}>
+        {TABS.map((entry) => (
+          <Pressable
+            key={entry.key}
+            testID={`tab-${entry.key}`}
+            onPress={() => setTab(entry.key)}
+            style={[styles.tab, tab === entry.key && styles.tabActive]}
+          >
+            <Text style={[styles.tabLabel, tab === entry.key && styles.tabLabelActive]}>
+              {entry.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
-          return (
-            <View
-              key={item.bodyId}
-              testID={`body-${item.bodyId}`}
-              style={[
-                styles.sprite,
-                size,
-                {
-                  left,
-                  top,
-                  backgroundColor: item.color,
-                  borderRadius: item.kind === 'circle' ? size.width / 2 : 4,
-                  transform: [{ rotate: `${radToDeg(item.transform.angle)}deg` }],
-                },
-              ]}
-            />
-          )
-        })}
-
-        <View style={styles.floor} pointerEvents="none" />
-        <Text style={styles.hint}>Tap anywhere to drop a shape</Text>
-      </Pressable>
-
-      <View style={styles.controls}>
-        <Pressable style={styles.button} onPress={explode} testID="explode">
-          <Text style={styles.buttonLabel}>Explode</Text>
-        </Pressable>
-        <Pressable style={[styles.button, styles.secondary]} onPress={reset} testID="reset">
-          <Text style={styles.buttonLabel}>Reset</Text>
-        </Pressable>
+      {/*
+        Both screens stay mounted so switching tabs does not throw away a game in
+        progress — each holds its own world, and only the visible one steps it.
+        An unstepped world costs nothing but the memory it already had.
+      */}
+      <View style={[styles.screen, tab !== 'playground' && styles.hidden]}>
+        <PlaygroundScreen
+          active={tab === 'playground'}
+          width={width}
+          height={stageHeight}
+          onStats={onPlaygroundStats}
+        />
+      </View>
+      <View style={[styles.screen, tab !== 'pinball' && styles.hidden]}>
+        <PinballScreen
+          active={tab === 'pinball'}
+          width={width}
+          height={stageHeight}
+          onStats={onPinballStats}
+        />
       </View>
 
       <StatusBar style="light" />
@@ -174,7 +89,7 @@ function Playground() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <Playground />
+      <Shell />
     </SafeAreaProvider>
   )
 }
@@ -198,48 +113,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  stage: {
+  tabs: {
     backgroundColor: '#1a1d27',
-    overflow: 'hidden',
-  },
-  // A border on the stage would sit inside its box and push every absolutely
-  // positioned sprite down by a point, so the floor is drawn as its own view.
-  floor: {
-    backgroundColor: '#2a2f3d',
-    bottom: 0,
-    height: 1,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-  },
-  sprite: {
-    position: 'absolute',
-  },
-  hint: {
-    color: '#4d5468',
-    fontSize: 13,
-    position: 'absolute',
-    alignSelf: 'center',
-    top: 16,
-  },
-  controls: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 20,
-  },
-  button: {
-    backgroundColor: '#5b8def',
     borderRadius: 10,
+    flexDirection: 'row',
+    marginBottom: 12,
+    marginHorizontal: 20,
+    padding: 3,
+  },
+  tab: {
+    borderRadius: 8,
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 9,
   },
-  secondary: {
-    backgroundColor: '#2a2f3d',
+  tabActive: {
+    backgroundColor: '#2f3648',
   },
-  buttonLabel: {
-    color: '#f5f6fa',
-    fontSize: 15,
+  tabLabel: {
+    color: '#8b93a7',
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  tabLabelActive: {
+    color: '#f5f6fa',
+  },
+  screen: {
+    flex: 1,
+  },
+  hidden: {
+    display: 'none',
   },
 })
