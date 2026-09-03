@@ -14,6 +14,8 @@ npm run ios      # or: npm run android
 
 ### Playground
 
+![Shapes dropping onto a pile](https://raw.githubusercontent.com/NikPyzhevsky/nitro-box2d/main/docs/playground.gif)
+
 Tap anywhere to drop a shape, *Explode* to blow the pile apart, *Reset* to clear
 it. The header shows the Box2D version, the body count and how long a solver step
 is actually taking.
@@ -23,6 +25,8 @@ using this library: the fixed-timestep accumulator, the metres-to-pixels
 conversion, and the choice to render only the bodies that moved.
 
 ### Pinball
+
+![A ball launched from a spring plunger into scoring pockets](https://raw.githubusercontent.com/NikPyzhevsky/nitro-box2d/main/docs/pinball.gif)
 
 Drag anywhere on the table to draw the plunger back, let go to launch. Pull
 about seven tenths of the way and the ball clears the lane into the play area;

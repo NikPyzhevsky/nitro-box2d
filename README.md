@@ -6,6 +6,12 @@ The whole simulation runs in C++. JavaScript holds handles to native objects and
 calls straight into them — no bridge, no serialisation, no async round trip for
 reading a body's position sixty times a second.
 
+| Playground | Pinball |
+| --- | --- |
+| ![Shapes dropping onto a pile](https://raw.githubusercontent.com/NikPyzhevsky/nitro-box2d/main/docs/playground.gif) | ![A ball launched from a spring plunger into scoring pockets](https://raw.githubusercontent.com/NikPyzhevsky/nitro-box2d/main/docs/pinball.gif) |
+
+Both are screens of the [example app](example/), which is also the test suite.
+
 ```ts
 import { BodyType, box2d } from 'nitro-box2d'
 
