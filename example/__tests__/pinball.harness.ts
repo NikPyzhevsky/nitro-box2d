@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from 'react-native-harness'
 
 import { PinballScene, type PinballEvent } from '../src/pinball/scene'
 import {
+  BALL_RADIUS,
   buildTable,
   LANE_INNER_X,
   LANE_WALL_TOP_DROP,
@@ -54,6 +55,35 @@ describe('table geometry', () => {
     // Each pocket starts exactly where the previous one ended.
     for (let i = 1; i < table.pockets.length; i++) {
       expect(table.pockets[i]!.left).toBeCloseTo(table.pockets[i - 1]!.right, 5)
+    }
+  })
+
+  test('the peg field always leaves a gap wider than the ball', () => {
+    // Checked at both extremes of the table heights a phone can produce: a
+    // shorter screen must not squeeze the rows together until the ball can no
+    // longer get through.
+    for (const height of [7, TABLE_HEIGHT, 10]) {
+      const { pegs } = buildTable(height)
+
+      let narrowest = Infinity
+      for (let i = 0; i < pegs.length; i++) {
+        for (let j = i + 1; j < pegs.length; j++) {
+          const a = pegs[i]!
+          const b = pegs[j]!
+          narrowest = Math.min(narrowest, Math.hypot(a.x - b.x, a.y - b.y) - a.radius - b.radius)
+        }
+      }
+
+      expect(narrowest).toBeGreaterThan(BALL_RADIUS * 2)
+    }
+  })
+
+  test('the pegs stay clear of the walls and the launch lane', () => {
+    const { pegs } = buildTable(TABLE_HEIGHT)
+
+    for (const peg of pegs) {
+      expect(peg.x - peg.radius).toBeGreaterThan(-TABLE_HALF_WIDTH + BALL_RADIUS * 2)
+      expect(peg.x + peg.radius).toBeLessThan(LANE_INNER_X - BALL_RADIUS * 2)
     }
   })
 

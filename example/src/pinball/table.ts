@@ -27,6 +27,20 @@ export const PLUNGER_REST_Y = 1
 /** The two dividers flanking the jackpot stand higher, to guard it. */
 export const GUARD_HEIGHT = 1.55
 export const BALL_RADIUS = 0.13
+/**
+ * The bumpers the ball rebounds off.
+ *
+ * Big on purpose: small pegs on a table this size are mostly missed, and a ball
+ * that sails past everything is not a game. At this radius the field is a set of
+ * gaps to thread rather than a sparse scattering.
+ */
+export const PEG_RADIUS = 0.48
+/**
+ * Vertical spacing between peg rows, in metres rather than a fraction of the
+ * table height — the gaps between neighbouring pegs are only a ball's width to
+ * begin with, and letting them shrink on a shorter phone would close them.
+ */
+const PEG_ROW_SPACING = 1.3
 export const PLUNGER_HALF_WIDTH = 0.24
 export const PLUNGER_HALF_HEIGHT = 0.12
 /** How far down the plunger can be drawn, in metres. */
@@ -121,14 +135,18 @@ export const buildTable = (height: number): TableLayout => {
     ...dividers,
   ]
 
+  // Three staggered rows. Every neighbouring pair, including the diagonals, is
+  // left a gap wider than the ball, so there is always a way through — the ball
+  // is deflected rather than trapped.
+  const topRow = height * 0.68
   const pegs: Peg[] = [
-    { x: -1.45, y: height * 0.62, radius: 0.16 },
-    { x: 0.0, y: height * 0.7, radius: 0.16 },
-    { x: 1.2, y: height * 0.62, radius: 0.16 },
-    { x: -0.72, y: height * 0.5, radius: 0.16 },
-    { x: 0.6, y: height * 0.5, radius: 0.16 },
-    { x: -1.72, y: height * 0.38, radius: 0.16 },
-    { x: 1.5, y: height * 0.38, radius: 0.16 },
+    { x: -1.05, y: topRow, radius: PEG_RADIUS },
+    { x: 0.45, y: topRow, radius: PEG_RADIUS },
+    { x: -1.72, y: topRow - PEG_ROW_SPACING, radius: PEG_RADIUS },
+    { x: -0.28, y: topRow - PEG_ROW_SPACING, radius: PEG_RADIUS },
+    { x: 1.02, y: topRow - PEG_ROW_SPACING, radius: PEG_RADIUS },
+    { x: -1.05, y: topRow - PEG_ROW_SPACING * 2, radius: PEG_RADIUS },
+    { x: 0.45, y: topRow - PEG_ROW_SPACING * 2, radius: PEG_RADIUS },
   ]
 
   const laneCentre = (laneX + half) / 2
