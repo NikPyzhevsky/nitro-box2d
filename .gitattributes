@@ -1,0 +1,4 @@
+# Box2D is vendored verbatim, not written here. Keeping it out of the language
+# stats and collapsing it in diffs keeps `git log -p` and GitHub's "this repo is
+# 60% C" both honest.
+third_party/box2d/** linguist-vendored=true

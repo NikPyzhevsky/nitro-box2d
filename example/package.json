@@ -1,0 +1,33 @@
+{
+  "name": "nitro-box2d-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild --clean",
+    "test": "harness",
+    "test:ios": "harness --harnessRunner ios-simulator",
+    "test:android": "harness --harnessRunner android-emulator"
+  },
+  "dependencies": {
+    "expo": "~57.0.4",
+    "expo-status-bar": "~57.0.0",
+    "nitro-box2d": "file:..",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-nitro-modules": "0.37.1",
+    "react-native-safe-area-context": "~5.7.0"
+  },
+  "devDependencies": {
+    "@react-native-harness/platform-android": "^1.4.1",
+    "@react-native-harness/platform-apple": "^1.4.1",
+    "@react-native-harness/ui": "^1.4.1",
+    "@types/react": "~19.2.2",
+    "babel-preset-expo": "^57.0.10",
+    "react-native-harness": "^1.4.1",
+    "typescript": "~6.0.3"
+  }
+}

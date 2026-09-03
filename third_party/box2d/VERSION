@@ -1,0 +1,8 @@
+box2d 3.1.1
+https://github.com/erincatto/box2d/releases/tag/v3.1.1
+
+Vendored verbatim except for the parts a React Native package has no use for:
+samples/, test/, benchmark/, extern/, shared/, docs/ and the CMake build, which
+is replaced by ../../android/CMakeLists.txt (Android) and ../../NitroBox2d.podspec
+(iOS). Nothing under include/ or src/ is patched — update by dropping a newer
+release in place.

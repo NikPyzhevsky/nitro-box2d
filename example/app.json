@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "nitro-box2d-example",
+    "slug": "nitro-box2d-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nitrobox2dexample",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.nitrobox2d.example",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.nitrobox2d.example",
+      "predictiveBackGestureEnabled": false
+    }
+  }
+}
